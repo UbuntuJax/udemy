@@ -1,3 +1,8 @@
+'''
+The given Python code is a ROS2 node that publishes an Occupancy Grid message to the 'map' topic every 0.5 seconds.
+ The OccupancyGrid message is a standard ROS2 message used to represent maps,
+   and it is defined in the 'nav_msgs.msg' module.
+'''
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
@@ -6,34 +11,44 @@ from std_msgs.msg import Header
 import numpy as np
 
 
-class MinimalPublisher(Node):
+class Occupancy_grid_pub(Node):
 
     def __init__(self):
-        super().__init__('minimal_publisher')
-        self.publisher_ = self.create_publisher(String, 'topic', 10)
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.i = 0
+        super().__init__('Occupancy_grid_pub_node')
+        self.grid_publisher_ = self.create_publisher(OccupancyGrid, 'map', 10)
+        self.timer = self.create_timer(0.5, self.og_pub_callback)
 
-    def timer_callback(self):
-        msg = String()
-        msg.data = 'Hello World: %d' % self.i
-        self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
-        self.i += 1
+
+    def og_pub_callback(self):
+        occupancy_grid_msg = OccupancyGrid()
+        occupancy_grid_msg.header = Header()
+        occupancy_grid_msg.header.stamp = self.get_clock().now().to_msg()
+        occupancy_grid_msg.header.frame_id = 'map_frame'
+
+        occupancy_grid_msg.info.resolution=1.0
+        occupancy_grid_msg.info.width= 3
+        occupancy_grid_msg.info.height= 3
+
+        occupancy_grid_msg.info.origin.position.x = 0.0
+        occupancy_grid_msg.info.origin.position.y = 0.0
+        occupancy_grid_msg.info.origin.position.z = 0.0
+        array = np.array([0,1,1,0,0,0,0,0,1],dtype=np.int8)
+        occupancy_grid_msg.data = array.tolist()
+
+
+
+        self.grid_publisher_.publish(occupancy_grid_msg)
+
+
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    minimal_publisher = MinimalPublisher()
-
-    rclpy.spin(minimal_publisher)
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
-    minimal_publisher.destroy_node()
+    OG_publisher = Occupancy_grid_pub()
+    print("Publishing Map ")
+    rclpy.spin(OG_publisher)
+    OG_publisher.destroy_node()
     rclpy.shutdown()
 
 
